@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Nauka składników pizz - Tutti Santi Pila</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px #ccc; }
+        h1 { text-align: center; color: #c0392b; }
+        .pizza-list { margin: 30px 0; }
+        .pizza { margin-bottom: 25px; }
+        .pizza-name { font-weight: bold; color: #2c3e50; font-size: 1.2em; cursor: pointer; }
+        .skladniki { margin-left: 20px; display: none; }
+        .quiz-section { background: #f9ecec; padding: 20px; border-radius: 8px; margin-top: 40px; }
+        .quiz-question { font-size: 1.1em; margin-bottom: 10px; }
+        .quiz-input { width: 100%; padding: 8px; font-size: 1em; margin-bottom: 10px; }
+        .quiz-btn { background: #c0392b; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; font-size: 1em; cursor: pointer; }
+        .quiz-btn:disabled { background: #aaa; }
+        .quiz-feedback { margin-top: 10px; font-weight: bold; }
+        .show-btn { background: #2980b9; color: #fff; border: none; padding: 5px 10px; border-radius: 5px; font-size: 0.9em; cursor: pointer; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Nauka składników pizz Tutti Santi</h1>
+        <p>Kliknij nazwę pizzy, aby zobaczyć jej składniki. Możesz też sprawdzić swoją wiedzę w quizie poniżej!</p>
+        <div class="pizza-list" id="pizzaList">
+            <!-- Lista pizz wypełniana przez JS -->
+        </div>
+        <div class="quiz-section" id="quizSection">
+            <h2>Quiz: Wymień składniki pizzy</h2>
+            <div class="quiz-question" id="quizQuestion"></div>
+            <input type="text" class="quiz-input" id="quizInput" placeholder="Wpisz składniki oddzielone przecinkami">
+            <button class="quiz-btn" id="quizBtn">Sprawdź</button>
+            <div class="quiz-feedback" id="quizFeedback"></div>
+            <button class="quiz-btn" id="nextQuizBtn" style="display:none;">Następne pytanie</button>
+        </div>
+    </div>
+    <script>
+    // Dane pizz i składników
+    const pizzas = [
+        { name: "Asparagi e Tartufo", skladniki: ["sos śmietanowo-serowy", "szparagi", "Mozzarella di Bufala D.O.P.", "żółte pomidorki Daterrini", "pasta truflowa", "suszony pomidor", "prażone migdały"] },
+        { name: "Abruzja", skladniki: ["sos czerwony", "Mozzarella di Bufala", "boczek dojrzewający Pancetta", "cebula", "owczy ser Pecorino Romano"] },
+        { name: "Rukola", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "szynka Prosciutto Crudo", "rukola"] },
+        { name: "San Antonio", skladniki: ["sos czerwony", "Mozzarella", "ser pleśniowy Gorgonzola", "Salami Picante", "ser Grana Padano", "rukola"] },
+        { name: "Santa Clara", skladniki: ["sos czerwony", "szynka Prosciutto Crudo", "pomidory koktajlowe", "rukola", "ser Burrata", "krem balsamiczny"] },
+        { name: "Spinaci e Ricotta", skladniki: ["sos czerwony", "Mozzarella", "szpinak", "karmelizowane pomidorki koktajlowe", "Ricotta", "czarne oliwki", "tymianek"] },
+        { name: "Parma", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "Mozzarella di Bufala", "szynka Prosciutto Crudo", "czarne oliwki"] },
+        { name: "Quattro Formaggi Plus", skladniki: ["sos czerwony", "Mozzarella", "Salami Picante", "ser pleśniowy Gorgonzola", "owczy ser Pecorino Romano", "ser Grana Padano"] },
+        { name: "San Giorgio", skladniki: ["sos czerwony", "krewetki z czosnkiem i pietruszką", "Mozzarella di Bufala", "boczek dojrzewający Pancetta", "karmelizowane pomidorki", "natka pietruszki"] },
+        { name: "Sant' Andrea", skladniki: ["sos czerwony", "Mozzarella", "krewetki w oliwie pikantnej", "szpinak", "Salami Picante", "Ricotta", "cytryna", "tymianek"] },
+        { name: "San Sebastiano", skladniki: ["sos czerwony", "Mozzarella", "szynka Speck", "ser Provolone Picante", "cebula", "pikantna papryczka", "tymianek"] },
+        { name: "Pancetta", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "szynka Prosciutto Cotto", "boczek dojrzewający Pancetta"] },
+        { name: "Margherita con Bufala", skladniki: ["sos czerwony", "Mozzarella di Bufala", "bazylia"] },
+        { name: "San Marco", skladniki: ["sos śmietanowy z Grana Padano i czosnkiem", "miks grzybów leśnych", "Mozzarella di Bufala", "szynka Prosciutto Crudo", "szczypiorek"] },
+        { name: "Santa Rita", skladniki: ["pomidory zapieczone z oliwą czosnkową i Grana Padano", "szynka Prosciutto Crudo", "Mozzarella di Bufala", "pomidorki koktajlowe", "bazylia"] },
+        { name: "San Luca", skladniki: ["sos śmietanowy z Grana Padano i czosnkiem", "miks grzybów leśnych", "Mozzarella di Bufala", "Salami Picante", "szczypiorek"] },
+        { name: "San Giovanni", skladniki: ["Mozzarella", "pieczarki", "szynka Prosciutto Cotto", "krem truflowy", "rukola", "owczy ser Pecorino Romano"] },
+        { name: "Tartufo", skladniki: ["Mozzarella", "pieczarki", "szynka Prosciutto Cotto", "Mozzarella di Bufala", "krem truflowy"] },
+        { name: "San Pietro", skladniki: ["Mozzarella", "ser Stracchino", "karmelizowane pomidorki koktajlowe", "pesto z pietruszki", "rukola"] },
+        { name: "Carciofi e Bufala", skladniki: ["Mozzarella di Bufala", "karczochy", "szpinak", "oliwa czosnkowa", "orzechy włoskie", "pesto z pietruszki", "suszone pomidory", "rukola", "koperek"] },
+        { name: "Verdure Miste", skladniki: ["sos czerwony", "bakłażan z czosnkiem", "oliwki Leccino", "cebula", "kapary", "orzeszki pinii", "bazylia"] },
+        { name: "Funghi Misti", skladniki: ["sos czerwony", "miks grzybów leśnych", "rukola", "orzechy włoskie", "krem balsamiczny o smaku orzechowo-gruszkowym"] },
+        { name: "Capricciosa", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "karczochy", "szynka Prosciutto Cotto", "czarne oliwki"] },
+        { name: "Calzone Valerio (pizza zamykana)", skladniki: ["sos czerwony", "Mozzarella", "szynka Prosciutto Cotto", "pieczarki", "rukola"] },
+        { name: "Prosciutto e Salame", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "szynka Prosciutto Cotto", "Salami Milano"] },
+        { name: "Quattro Stagioni", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "karczochy", "szynka Prosciutto Cotto", "Salami Milano"] },
+        { name: "Prosciutto e Funghi", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "szynka Prosciutto Cotto"] },
+        { name: "Prosciutto", skladniki: ["sos czerwony", "Mozzarella", "szynka Prosciutto Cotto"] },
+        { name: "Pancetta e Salame", skladniki: ["sos czerwony", "Mozzarella", "pieczarki", "boczek dojrzewający Pancetta", "Salami Picante", "ser pleśniowy Gorgonzola"] },
+        { name: "Quattro Formaggi", skladniki: ["sos czerwony", "Mozzarella", "ser pleśniowy Gorgonzola", "ser Grana Padano", "owczy ser Pecorino Romano"] }
+    ];
+
+    // Tworzenie listy pizz
+    const pizzaListDiv = document.getElementById('pizzaList');
+    pizzas.forEach((pizza, idx) => {
+        const pizzaDiv = document.createElement('div');
+        pizzaDiv.className = 'pizza';
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'pizza-name';
+        nameDiv.textContent = pizza.name;
+        nameDiv.onclick = function() {
+            const skl = this.nextElementSibling;
+            skl.style.display = skl.style.display === 'block' ? 'none' : 'block';
+        };
+        const skladnikiDiv = document.createElement('div');
+        skladnikiDiv.className = 'skladniki';
+        skladnikiDiv.innerHTML = pizza.skladniki.map(s => '• ' + s).join('<br>');
+        pizzaDiv.appendChild(nameDiv);
+        pizzaDiv.appendChild(skladnikiDiv);
+        pizzaListDiv.appendChild(pizzaDiv);
+    });
+
+    // Quiz
+    let quizIndex = 0;
+    let quizOrder = [];
+    const quizQuestion = document.getElementById('quizQuestion');
+    const quizInput = document.getElementById('quizInput');
+    const quizBtn = document.getElementById('quizBtn');
+    const quizFeedback = document.getElementById('quizFeedback');
+    const nextQuizBtn = document.getElementById('nextQuizBtn');
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function startQuiz() {
+        quizOrder = Array.from({length: pizzas.length}, (_, i) => i);
+        shuffle(quizOrder);
+        quizIndex = 0;
+        showQuizQuestion();
+        quizFeedback.textContent = '';
+        quizInput.value = '';
+        nextQuizBtn.style.display = 'none';
+        quizBtn.disabled = false;
+    }
+
+    function showQuizQuestion() {
+        const pizza = pizzas[quizOrder[quizIndex]];
+        quizQuestion.textContent = `Jakie składniki ma pizza "${pizza.name}"?`;
+        quizInput.value = '';
+        quizFeedback.textContent = '';
+        quizInput.disabled = false;
+        quizBtn.disabled = false;
+        nextQuizBtn.style.display = 'none';
+    }
+
+    quizBtn.onclick = function() {
+        const pizza = pizzas[quizOrder[quizIndex]];
+        const userInput = quizInput.value.toLowerCase().split(',').map(s => s.trim()).filter(s => s.length > 0);
+        const correct = pizza.skladniki.map(s => s.toLowerCase());
+        let correctCount = 0;
+        userInput.forEach(s => {
+            if (correct.includes(s)) correctCount++;
+        });
+        if (correctCount === correct.length && userInput.length === correct.length) {
+            quizFeedback.textContent = "Brawo! Wszystkie składniki poprawne.";
+            quizFeedback.style.color = "green";
+        } else {
+            quizFeedback.textContent = `Poprawne składniki: ${pizza.skladniki.join(', ')}`;
+            quizFeedback.style.color = "red";
+        }
+        quizInput.disabled = true;
+        quizBtn.disabled = true;
+        nextQuizBtn.style.display = 'inline-block';
+    };
+
+    nextQuizBtn.onclick = function() {
+        quizIndex++;
+        if (quizIndex < pizzas.length) {
+            showQuizQuestion();
+        } else {
+            quizQuestion.textContent = "Quiz zakończony! Możesz zacząć od nowa.";
+            quizInput.style.display = 'none';
+            quizBtn.style.display = 'none';
+            nextQuizBtn.style.display = 'none';
+        }
+    };
+
+    // Start quizu na początku
+    startQuiz();
+
+    // Restart quizu po odświeżeniu strony
+    quizInput.style.display = 'inline-block';
+    quizBtn.style.display = 'inline-block';
+    </script>
+</body>
+</html>
